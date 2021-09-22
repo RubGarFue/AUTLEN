@@ -11,8 +11,8 @@ ejercicios 1-5:
 RE1 = "[a-zA-Z0-9_]+\.py"
 RE2 = "-?(([1-9][0-9]*)|0)?(\.?|\.[0-9]*)"
 RE3 = "[a-z]+\.[a-z]+@(estudiante\.)?uam.es"
-RE4 = "([a-zA-Z ]*\([a-zA-Z ]*\))+[a-zA-Z ]*"
-RE5 = "([a-zA-Z ]*\([a-zA-Z ]*(\([a-zA-Z ]*\))*\))+[a-zA-Z ]*"
+RE4 = "([^(^)]*\([^(^)]*\))+[^(^)]*"
+RE5 = "([^(^)]*\([^(^)]*(\([^(^)]*\))*\))+[^(^)]*"
 
 """
 Recuerda que puedes usar el fichero prueba.py para probar tus
