@@ -11,46 +11,42 @@ class FiniteAutomatonEvaluator(
     """Evaluator of an automaton."""
 
     def process_symbol(self, symbol: str) -> None:
-        new_states = Set[State]
+        new_states = set()
 
-        for state in super().current_states:
-            for transition in super().automaton.transitions:
+        if symbol is not None and symbol not in self.automaton.symbols:
+                raise ValueError(
+                    f"Symbol {symbol}"
+                    f"is not in the set of symbols",
+                )
+
+        for state in self.current_states:
+            for transition in self.automaton.transitions:
                 if state == transition.initial_state and symbol == transition.symbol:
                     new_states.add(transition.final_state)
         
-        #self._complete_lambdas(new_states)
+        self._complete_lambdas(new_states)
 
-        super().current_states = new_states
-
-    
-    def _complete_lambda(self, state: State, set_to_complete: Set[State]) -> None:
-
-        lambda_set = Set[State]
-        
-        for transition in super().automaton.transitions:
-            if state == transition.initial_state and "" == transition.symbol:
-                self._complete_lambda(transition.final_state, set_to_complete)
-                lambda_set.add(transition.final_state)
+        self.current_states = new_states
 
 
     def _complete_lambdas(self, set_to_complete: Set[State]) -> None:
-        raise NotImplementedError("This method must be implemented.")
-        new_states = Set[State]
+        #raise NotImplementedError("This method must be implemented.")
+        initial_len = len(set_to_complete)
+        new_states = set()
         
         for state in set_to_complete:
-            lambda_states = Set[State]
-            self._complete_lambda(state, lambda_states)
-            new_states.update(lambda_states)
-            for transition in super().automaton.transitions:
-                if state == transition.initial_state and "" == transition.symbol:
-                    self._complete_lambdas(set_to_complete.add(state))
+            for transition in self.automaton.transitions:
+                if state == transition.initial_state and not transition.symbol:
+                    new_states.add(transition.final_state)
         
-        super().current_states = new_states
+        set_to_complete.update(new_states)
+        if len(set_to_complete) != initial_len:
+            self._complete_lambdas(set_to_complete)
 
 
     def is_accepting(self) -> bool:
         
-        for state in super().current_states:
+        for state in self.current_states:
             if state.is_final:
                 return True
         
