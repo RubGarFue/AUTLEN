@@ -30,7 +30,7 @@ class FiniteAutomatonEvaluator(
 
 
     def _complete_lambdas(self, set_to_complete: Set[State]) -> None:
-        #raise NotImplementedError("This method must be implemented.")
+        
         initial_len = len(set_to_complete)
         new_states = set()
         
