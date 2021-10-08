@@ -11,7 +11,7 @@ class REParser(AbstractREParser):
         self,
     ) -> FiniteAutomaton:
     
-        state = State("qi", is_final=True)
+        state = State("q0", is_final=True)
         return FiniteAutomaton(initial_state=state,
                                 states=(state,),
                                 symbols=(),
@@ -22,31 +22,31 @@ class REParser(AbstractREParser):
         self,
     ) -> FiniteAutomaton:
     
-        qi = State("qi")
-        f0 = State("f0", is_final=True)
-        trans1 = Transition(initial_state=qi,
+        q0 = State("q0")
+        q1 = State("q1", is_final=True)
+        trans = Transition(initial_state=q0,
                             symbol=(None,),
-                            final_state=f0)
-        return FiniteAutomaton(initial_sate=qi,
-                                states=(qi, f0),
+                            final_state=q1)
+        return FiniteAutomaton(initial_sate=q0,
+                                states=(q0, q1),
                                 symbols=(None,),
-                                transitions=(trans1,))
+                                transitions=(trans,))
 
 
     def _create_automaton_symbol(
         self,
         symbol: str,
     ) -> FiniteAutomaton:
-        initial_state = State("qi")
-        f0 = State("f0", is_final=True)
-        trans1 = Transition(initial_state=initial_state,
+        initial_state = State("q0")
+        final_state = State("q1", is_final=True)
+        trans = Transition(initial_state=initial_state,
                             symbol=symbol,
-                            final_state=f0)
+                            final_state=final_state)
                             
         return FiniteAutomaton(initial_state=initial_state,
-                                states=(initial_state, f0),
+                                states=(initial_state, final_state),
                                 symbols=(symbol,),
-                                transitions=(trans1,))
+                                transitions=(trans,))
 
 
     def _create_automaton_star(
@@ -54,30 +54,33 @@ class REParser(AbstractREParser):
         automaton: FiniteAutomaton,
     ) -> FiniteAutomaton:
         
-        final_state = self._get_final_state(automaton)
+        automaton_final_state = self._get_final_state(automaton)
 
-        qi = State("qi")
-        f0 = State("f0", is_final=True)
+        nextstate = len(automaton.states)
+        initial_state = State("q"+str(nextstate))
+        final_state = State("q"+str(nextstate+1), is_final=True)
 
-        trans1 = Transition(initial_state=qi,
+        trans1 = Transition(initial_state=initial_state,
                             symbol=None,
                             final_state=automaton.initial_state)
 
-        trans2 = Transition(initial_state=final_state,
+        trans2 = Transition(initial_state=initial_state,
+                            symbol=None,
+                            final_state=final_state)
+        
+        trans3 = Transition(initial_state=automaton_final_state,
+                            symbol=None,
+                            final_state=final_state)
+
+        trans4 = Transition(initial_state=automaton_final_state,
                             symbol=None,
                             final_state=automaton.initial_state)
         
-        trans3 = Transition(initial_state=final_state,
-                            symbol=None,
-                            final_state=f0)
-
-        trans4 = Transition(initial_state=qi,
-                            symbol=None,
-                            final_state=f0)
-        
-        automaton.states += (qi, f0)
+        automaton.states += (initial_state, final_state)
         automaton.symbols += (None,)
         automaton.transitions += (trans1, trans2, trans3, trans4)
+
+        automaton.initial_state = initial_state
 
         return automaton
 
@@ -87,41 +90,45 @@ class REParser(AbstractREParser):
         automaton1: FiniteAutomaton,
         automaton2: FiniteAutomaton,
     ) -> FiniteAutomaton:
-        qi = State("qi")
-        f0 = State("f0", is_final=True)
 
         final_state1 = self._get_final_state(automaton1)
         final_state2 = self._get_final_state(automaton2)
-        states = (qi, f0) + automaton1.states + automaton2.states
 
-        for state in automaton1.states:
-            print(state.name)
-        
-        print("---")
+        nextstate = len(automaton1.states)
+
         for state in automaton2.states:
-            print(state.name)
-
-        print("fin")
+            state.name = "q"+str(nextstate)
+            nextstate += 1
         
-        symbols = (None,) + automaton1.symbols + automaton2.symbols
+        initial_state = State("q"+str(nextstate))
+        final_state = State("q"+str(nextstate+1), is_final=True)
 
-        t1 = Transition(initial_state=qi,
+        symbols = automaton1.symbols
+
+        for symbol in automaton2.symbols:
+            if symbol not in symbols:
+                symbols += (symbol,)
+        
+        if None not in symbols:
+            symbols += (None,)
+
+        t1 = Transition(initial_state=initial_state,
                         symbol=None,
                         final_state=automaton1.initial_state)
-        t2 = Transition(initial_state=qi,
+        t2 = Transition(initial_state=initial_state,
                         symbol=None,
                         final_state=automaton2.initial_state)
         t3 = Transition(initial_state=final_state1,
                         symbol=None,
-                        final_state=f0)
+                        final_state=final_state)
         t4 = Transition(initial_state=final_state2,
                         symbol=None,
-                        final_state=f0)
-
-        states = (qi, f0) + automaton1.states + automaton2.states
+                        final_state=final_state)
+        
+        states = (initial_state, final_state) + automaton1.states + automaton2.states
         transitions = (t1,t2,t3,t4) + automaton1.transitions + automaton2.transitions
         
-        return FiniteAutomaton(initial_state=qi,
+        return FiniteAutomaton(initial_state=initial_state,
                                 states=states,
                                 symbols=symbols,
                                 transitions=transitions)
@@ -135,8 +142,8 @@ class REParser(AbstractREParser):
 
         automaton = FiniteAutomaton(initial_state=automaton1.initial_state,
                                     states=automaton1.states,
-                                    symbols=automaton1.symbols + automaton2.symbols + (None,),
-                                    transitions=automaton1.transitions + automaton2.transitions)
+                                    symbols=automaton1.symbols,
+                                    transitions=automaton1.transitions)
         
         final_state = self._get_final_state(automaton)
 
@@ -144,10 +151,28 @@ class REParser(AbstractREParser):
                             symbol=None,
                             final_state=automaton2.initial_state)
         
-        automaton.states += automaton2.states
-        automaton.transitions += (trans,)
+        nextstate = len(automaton1.states)
 
-        return automaton
+        for state in automaton2.states:
+            state.name = "q"+str(nextstate)
+            nextstate += 1
+        
+        symbols = automaton1.symbols
+
+        for symbol in automaton2.symbols:
+            if symbol not in symbols:
+                symbols += (symbol,)
+        
+        if None not in symbols:
+            symbols += (None,)
+        
+        states = automaton1.states + automaton2.states
+        transitions = automaton1.transitions + automaton2.transitions + (trans,)
+
+        return FiniteAutomaton(initial_state=automaton1.initial_state,
+                               states=states,
+                               symbols=symbols,
+                               transitions=transitions)
 
 
     def _get_final_state(
