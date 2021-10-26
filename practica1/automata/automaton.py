@@ -47,7 +47,6 @@ class FiniteAutomaton(
     def to_deterministic(
         self,
     ) -> "FiniteAutomaton":
-        #!evaluator = FiniteAutomatonEvaluator(self)
 
         initial_states = {self.initial_state}
         initial_states = self._complete_lambdas(initial_states)
@@ -66,10 +65,8 @@ class FiniteAutomaton(
         # Creamos la tabla de estados para el AFD
         for state in dictstates['States']:
             current_states = state
-            #evaluator.current_states = state
             for symbol in symbols:
                 current_states = self._process_symbol(current_states, symbol)
-                #evaluator.process_symbol(symbol)
                 if not current_states:
                     dictstates[symbol].append(None)
                 else:
@@ -87,30 +84,36 @@ class FiniteAutomaton(
                             symbol=symbol,
                             final_state=sink)
             sink_transitions += (trans,)
-        
+
         # Cambiamos los conjuntos de estados por nuevos estados
-        index = 0
         for state in dictstates['States']:
-            state = self._combine_states(state)
-            dictstates['States'][index] = state
-            index += 1
-        
-        # Actualizamos la tabla de estados  actualizando el
-        # estado sumidero en caso necesario
+            combined_state = self._combine_states(state)
+            for key in dictstates.keys():
+                index = 0
+                for value in dictstates[key]:
+                    if value == state:
+                        dictstates[key][index] = combined_state
+                    index += 1
+
+        # Actualizamos la tabla de estados y las transiciones
+        # actualizando el estado sumidero en caso necesario
+        transitions = ()
         sink_state = False
         for key in list(dictstates.keys())[1:]:
             index = 0
             for value in dictstates[key]:
+                initial_state = dictstates['States'][index]
                 if value is None:
                     sink_state = True
-                    initial_state = dictstates['States'][index]
                     trans = Transition(initial_state=initial_state,
                                        symbol=key,
                                        final_state=sink)
                     sink_transitions += (trans,)
                 else:
-                    value = self._combine_states(value)
-                    dictstates[key][index] = value
+                    trans = Transition(initial_state=initial_state,
+                                       symbol=key,
+                                       final_state=value)
+                    transitions += (trans,)
                 index += 1
 
         # Actualizamos los estados del AFD
@@ -118,12 +121,6 @@ class FiniteAutomaton(
         for state in dictstates['States']:
             states += (state,)
 
-        # Actualizamos las transiciones del AFD
-        transitions = ()
-        for transition in self.transitions:
-            if transition.symbol is not None:
-                transitions += (transition,)
-        
         # Actualizamos estado y transiciones si hay estado sumidero
         if sink_state:
             states += (sink,)
@@ -172,15 +169,8 @@ class FiniteAutomaton(
             name += state.name
             if state.is_final:
                 is_final = True
-        #name = name[:-1]
 
         new_state = State(name, is_final=is_final)
-
-        for transition in self.transitions:
-            if transition.initial_state in states:
-                transition.initial_state = new_state
-            if transition.final_state in states:
-                transition.final_state = new_state
 
         return new_state
 
