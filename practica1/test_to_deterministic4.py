@@ -27,35 +27,41 @@ class TestTransform(ABC, unittest.TestCase):
         """Test Case 1."""
         automaton_str = """
         Automaton:
-            Symbols: 01
+            Symbols: ab
 
             q0
             q1
-            qf final
+            q2
+            q3 final
 
             --> q0
-            q0 -0-> qf
-            q1 -1-> qf
+            q0 -a-> q0
+            q0 -b-> q0
+            q0 -a-> q1
+            q1 -b-> q2
+            q2 -a-> q3
         """
 
         automaton = AutomataFormat.read(automaton_str)
 
         expected_str = """
         Automaton:
-            Symbols: 01
+            Symbols: ab
 
             q0
+            q1
+            q2
             qf final
-            empty
 
             --> q0
-            q0 -0-> qf
-            q0 -1-> empty
-            qf -0-> empty
-            qf -1-> empty
-            empty -0-> empty
-            empty -1-> empty
-
+            q0 -a-> q1
+            q0 -b-> q0
+            q1 -a-> q1
+            q1 -b-> q2
+            q2 -a-> qf
+            q2 -b-> q0
+            qf -a-> q1
+            qf -b-> q2
         """
 
         expected = AutomataFormat.read(expected_str)
