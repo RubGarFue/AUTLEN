@@ -234,12 +234,59 @@ class FiniteAutomaton(
 
         for s1 in range(len_states):
             for s2 in range(s1+1,len_states):
-                if states[s1].is_final or states[s2].is_final:
+                if (states[s1].is_final and not states[s2].is_final) or (not states[s1].is_final and states[s2].is_final):
                     table[(s1,s2)] = 1
                 else:
                     table[(s1,s2)] = 0
                 
         # fill in table
+        #flag = True
+        #while flag:
+        #    flag = False
+        #    for s1 in range(len_states):
+        #        for s2 in range(s1+1, len_states):
+        #            if table[(s1,s2)]:
+        #                continue
+        #            for symbol in self.symbols:
+        #                next1 = self._process_symbol({states[s1]}, symbol).pop()
+        #                next2 = self._process_symbol({states[s2]}, symbol).pop()
+        #                if (next1.is_final and not next2.is_final) or (not next1.is_final and next2.is_final):
+        #                    table[(s1,s2)] = 1
+        #                    flag = True
+        #                    break
+
+        ##### WIKIPEDIA pero no tira #######
+        #finals = {state for state in states if state.is_final}
+        #not_finals = set(states) - finals
+        #quo1 = [finals, not_finals]
+        #quo2 = [finals, not_finals]
+        #while quo2:
+        #    A = quo2.pop()
+        #    for symbol in self.symbols:
+        #        X = set()
+        #        for trans in self.transitions:
+        #            if trans.final_state in A:
+        #                X.add(trans.initial_state)
+        #        new_quo1 = []
+        #        new_quo2 = []
+        #        for Y in quo1:
+        #            if X&Y and Y-X:
+        #                new_quo1.append(X&Y)
+        #                new_quo1.append(Y-X)
+        #                if Y in quo2:
+        #                    new_quo2.append(X&Y)
+        #                    new_quo2.append(Y-X)
+        #                else:
+        #                    if len(X&Y) <= len(Y-X):
+        #                        new_quo2.append(X&Y)
+        #                    else:
+        #                        new_quo2.append(Y-X)
+        #            else:
+        #                new_quo1.append(Y)
+        #        quo2 = new_quo2
+        #        quo2 = new_quo2
+
+        # con la captura esa que hice
         flag = True
         while flag:
             flag = False
@@ -248,26 +295,42 @@ class FiniteAutomaton(
                     if table[(s1,s2)]:
                         continue
                     for symbol in self.symbols:
-                        next1 = self._process_symbol({states[s1]}, symbol).pop()
-                        next2 = self._process_symbol({states[s2]}, symbol).pop()
-                        if (next1.is_final and not next2.is_final) or (not next1.is_final and next2.is_final):
-                            table[(s1,s2)] = 1
-                            flag = True
-                            break
+                        next1 = states.index(self._process_symbol({states[s1]}, symbol).pop())
+                        next2 = states.index(self._process_symbol({states[s2]}, symbol).pop())
+                        if (next1, next2) in table.keys():
+                            if table[(next1,next2)]:
+                                table[(s1,s2)] = 1
+                                flag = True
+                                break
+                        if (next2, next1) in table.keys():
+                            if table[(next2,next1)]:
+                                table[(s1,s2)] = 1
+                                flag = True
+                                break
 
         # combine equivalent states
-        new_states = set()
+        pair_of_states = []
         for s1 in range(len_states):
-            equiv_states = set()
             for s2 in range(s1+1, len_states):
                 if not table[(s1,s2)]:
-                    equiv_states.add(states[s2])
-            if equiv_states:
-                equiv_states.add(states[s1])
-                new_state = self._combine_states(equiv_states)
-                new_states.add(new_state)
-            else:
-                new_states.add(states[s1])
+                    pair_of_states.append({s1,s2})
 
-        a = "holi"
+        merged_states = []
+        for p1 in range(len(pair_of_states)):
+            union = pair_of_states[p1]
+            for p2 in range(p1+1, len(pair_of_states)):
+                if pair_of_states[p1] & pair_of_states[p2]:
+                    union = union.union(pair_of_states[p2])
+            skip = False
+            for merge_s in merged_states:
+                if union <= merge_s:
+                    skip = True
+                    break
+            if not skip:
+                merged_states.append(union)
+        for s1 in range(len_states): # add nor merged states
+            if not any(s1 in subs for subs in merged_states):
+                merged_states.append({s1})
+
+        a = 'fifiiin'
         

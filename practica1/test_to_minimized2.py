@@ -23,33 +23,39 @@ class TestTransform(ABC, unittest.TestCase):
 
         self.assertTrue(equiv_map is not None)
 
-    # example from https://www.javatpoint.com/minimization-of-dfa
+    # example from slides in Moodle
     def test_case1(self) -> None:
         """Test Case 1."""
         automaton_str = """
         Automaton:
             Symbols: 01
 
-            q0
-            q1
-            q2
-            q3 final
-            q4
-            q5 final
+            A
+            B
+            C final
+            D
+            E
+            F
+            G
+            H
 
-            --> q0
-            q0 -0-> q1
-            q0 -1-> q3
-            q1 -0-> q0
-            q1 -1-> q3
-            q2 -0-> q1
-            q2 -1-> q4
-            q3 -0-> q5
-            q3 -1-> q5
-            q4 -0-> q3
-            q4 -1-> q3
-            q5 -0-> q5
-            q5 -1-> q5
+            --> A
+            A -0-> B
+            A -1-> F
+            B -0-> G
+            B -1-> C
+            C -0-> A
+            C -1-> C
+            D -0-> C
+            D -1-> G
+            E -0-> H
+            E -1-> F
+            F -0-> C
+            F -1-> G
+            G -0-> G
+            G -1-> E
+            H -0-> G
+            H -1-> C
         """
 
         automaton = AutomataFormat.read(automaton_str)
@@ -58,14 +64,23 @@ class TestTransform(ABC, unittest.TestCase):
         Automaton:
             Symbols: 01
 
-            q0q1
-            q3q5 final
+            AE
+            BH
+            C final
+            F
+            G
 
-            --> q0q1
-            q0q1 -0-> q0q1
-            q0q1 -1-> q3q5
-            q3q5 -0-> q3q5
-            q3q5 -1-> q3q5
+            --> AE
+            AE -0-> BH
+            AE -1-> F
+            BH -0-> G
+            BH -1-> C
+            C -0-> AE
+            C -1-> C
+            F -0-> C
+            F -1-> G
+            G -0-> G
+            G -1-> AE
 
         """
 
