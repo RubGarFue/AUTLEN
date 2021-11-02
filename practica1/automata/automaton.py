@@ -180,6 +180,7 @@ class FiniteAutomaton(
     ) -> "FiniteAutomaton":
         self._remove_unaccesible_states()
         self._group_equivalent_states()
+        return self
 
     def _remove_unaccesible_states(self):
         self.states = set(self.states)
@@ -313,7 +314,7 @@ class FiniteAutomaton(
         for s1 in range(len_states):
             for s2 in range(s1+1, len_states):
                 if not table[(s1,s2)]:
-                    pair_of_states.append({s1,s2})
+                    pair_of_states.append({states[s1],states[s2]})
 
         merged_states = []
         for p1 in range(len(pair_of_states)):
@@ -329,8 +330,33 @@ class FiniteAutomaton(
             if not skip:
                 merged_states.append(union)
         for s1 in range(len_states): # add nor merged states
-            if not any(s1 in subs for subs in merged_states):
-                merged_states.append({s1})
+            if not any({states[s1]} <= subs for subs in merged_states):
+                merged_states.append({states[s1]})
 
-        a = 'fifiiin'
+        # combine states
+        merged_combined_states = [self._combine_states(s) for s in merged_states]
+         
+        def _get_combined_from_state(self, state):
+            for ind in range(len(merged_states)):
+                if state in merged_states[ind]:
+                    return merged_combined_states[ind]
+
+        # new transitions
+        new_transitions = ()
+        for state_ind in range(len(merged_states)):
+            main_s = list(merged_states[state_ind])[0]
+            for t in self.transitions:
+                if t.initial_state == main_s:
+                    trans = Transition(initial_state=merged_combined_states[state_ind],
+                                       symbol=t.symbol,
+                                       final_state=_get_combined_from_state(self, t.final_state))
+                    new_transitions += (trans, )
+
+        # update initial state
+        for s in self.states:
+            initial = _get_combined_from_state(self, self.initial_state)
+
+        self.initial_state = initial
+        self.states = set(merged_combined_states)
+        self.transitions = new_transitions
         
