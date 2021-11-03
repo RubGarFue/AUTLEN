@@ -182,13 +182,14 @@ class FiniteAutomaton(
         self._group_equivalent_states()
         return self
 
-    def _remove_unaccesible_states(self):
+
+    def _remove_unaccesible_states(self) -> None:
         self.states = set(self.states)
-        # find accessible states
         accessible = set()
         prev_accessible = {self.initial_state}
         new_accessible = set()
 
+        # find accessible states
         for i in range(1, len(self.states)):
             for state in prev_accessible:
                 new_accessible.update(self._process_all_symbols(state))
@@ -212,7 +213,7 @@ class FiniteAutomaton(
 
             self.transitions = tuple(set(self.transitions) - set(trans_to_remove))
 
-    def _process_all_symbols(self, current_state: State): # ->
+    def _process_all_symbols(self, current_state: State) -> Set[State]:
         new_states = set()
 
         for trans in self.transitions:
@@ -221,18 +222,12 @@ class FiniteAutomaton(
             
         return new_states
 
-    def _group_equivalent_states(self):
+    def _group_equivalent_states(self) -> None:
         states = list(self.states)
         len_states = len(states)
 
         # create table
         table = dict()
-        # table['States'] = states
-        # len_states = len(states) - 1
-        # for state in states:
-        #     table[state] = [0]*len_states
-        #     len_states -= 1
-
         for s1 in range(len_states):
             for s2 in range(s1+1,len_states):
                 if (states[s1].is_final and not states[s2].is_final) or (not states[s1].is_final and states[s2].is_final):
@@ -241,53 +236,6 @@ class FiniteAutomaton(
                     table[(s1,s2)] = 0
                 
         # fill in table
-        #flag = True
-        #while flag:
-        #    flag = False
-        #    for s1 in range(len_states):
-        #        for s2 in range(s1+1, len_states):
-        #            if table[(s1,s2)]:
-        #                continue
-        #            for symbol in self.symbols:
-        #                next1 = self._process_symbol({states[s1]}, symbol).pop()
-        #                next2 = self._process_symbol({states[s2]}, symbol).pop()
-        #                if (next1.is_final and not next2.is_final) or (not next1.is_final and next2.is_final):
-        #                    table[(s1,s2)] = 1
-        #                    flag = True
-        #                    break
-
-        ##### WIKIPEDIA pero no tira #######
-        #finals = {state for state in states if state.is_final}
-        #not_finals = set(states) - finals
-        #quo1 = [finals, not_finals]
-        #quo2 = [finals, not_finals]
-        #while quo2:
-        #    A = quo2.pop()
-        #    for symbol in self.symbols:
-        #        X = set()
-        #        for trans in self.transitions:
-        #            if trans.final_state in A:
-        #                X.add(trans.initial_state)
-        #        new_quo1 = []
-        #        new_quo2 = []
-        #        for Y in quo1:
-        #            if X&Y and Y-X:
-        #                new_quo1.append(X&Y)
-        #                new_quo1.append(Y-X)
-        #                if Y in quo2:
-        #                    new_quo2.append(X&Y)
-        #                    new_quo2.append(Y-X)
-        #                else:
-        #                    if len(X&Y) <= len(Y-X):
-        #                        new_quo2.append(X&Y)
-        #                    else:
-        #                        new_quo2.append(Y-X)
-        #            else:
-        #                new_quo1.append(Y)
-        #        quo2 = new_quo2
-        #        quo2 = new_quo2
-
-        # con la captura esa que hice
         flag = True
         while flag:
             flag = False
@@ -329,14 +277,16 @@ class FiniteAutomaton(
                     break
             if not skip:
                 merged_states.append(union)
-        for s1 in range(len_states): # add nor merged states
+
+        # add nor merged states
+        for s1 in range(len_states): 
             if not any({states[s1]} <= subs for subs in merged_states):
                 merged_states.append({states[s1]})
 
         # combine states
         merged_combined_states = [self._combine_states(s) for s in merged_states]
          
-        def _get_combined_from_state(self, state):
+        def _get_combined_from_state(self, state) -> State:
             for ind in range(len(merged_states)):
                 if state in merged_states[ind]:
                     return merged_combined_states[ind]
