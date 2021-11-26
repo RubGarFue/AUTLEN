@@ -271,7 +271,8 @@ class LL1Table:
             SyntaxError: if the input string is not syntactically correct.
         """
         
-	# TO-DO: Complete this method for exercise 2...
+	    # TO-DO: Complete this method for exercise 2...
+        
 
         return ParseTree("") # Return an empty tree by default.
     

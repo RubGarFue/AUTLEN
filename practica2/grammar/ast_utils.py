@@ -12,19 +12,16 @@ class ASTMagicNumberDetector(ast.NodeVisitor):
     def _check_magic_number(self, number: complex) -> None:
         if isinstance(number, numbers.Number):
             if number == 1 or number == 0 or number == 1j:
-                return True
-        return False
+                self.magic_numbers += 1
 
 
     def visit_Num(self, node: ast.Num) -> None:
-        if self._check_magic_number(node.n):
-            self.magic_numbers += 1
+        self._check_magic_number(node.n)
 
 
     # Para Python >= 3.8
     def visit_Constant(self, node: ast.Constant) -> None:
-        if self._check_magic_number(node.value):
-            self.magic_numbers += 1
+        self._check_magic_number(node.value)
 
 
 class ASTDotVisitor(ast.NodeVisitor):
@@ -35,6 +32,8 @@ class ASTDotVisitor(ast.NodeVisitor):
         self.last_parent: Optional[int] = None
         self.last_field_name = ""
 
+    def prim_values_str(self, prim_list) -> str:
+        return ', '.join(['='.join([str(el) for el in prim_list[ind]]) for ind in range(len(prim_list))])
 
     def generic_visit(self, node: ast.AST) -> None:
         # usar un esquema similar al generic_visit de la clase padre para recorrer los hijos del nodo actual
@@ -42,50 +41,58 @@ class ASTDotVisitor(ast.NodeVisitor):
         # obtener los campos hijos (el resto) del nodo actual
         # procesar todos los campos hijos obtenidos del nodo actual (imprimir sus valores)
         # procesar todos los nodos hijos obtenidos del nodo actual (llamada a visit
+        
         if self.level == 0:
-            print('digraph {\n')
-
+            print('digraph {')
+            
+        if self.last_parent:
+            print('s{} -> s{}[label="{}"]'.format(self.last_parent, self.n_node, self.last_field_name))
+        
+        prim_values = [] 
         for field, value in ast.iter_fields(node):
-            self.level += 1
+            if not isinstance(value, list) and not isinstance(value, ast.AST):
+                prim_values.append((field,value))
+        print('s{}[label="{}({})"]'.format(self.n_node, type(node).__name__, self.prim_values_str(prim_values)))
+
+        n_node = self.n_node
+        self.level += 1
+        self.n_node += 1
+        for field, value in ast.iter_fields(node):
             if isinstance(value, list):
                 for item in value:
-                    print(value)
                     if isinstance(item, ast.AST):
-                        self.last_parent = self.n_node
-                        self.n_node += 1
-                        print('s' + str(self.last_parent) + ' -> ' + 's' + str(self.n_node) + '[label="' + field + '"]')
+                        self.last_parent = n_node
+                        self.last_field_name = field
                         self.visit(item)
             elif isinstance(value, ast.AST):
-                #self.last_parent = self.n_node
-                self.n_node += 1
-                print('s' + str(self.last_parent) + ' -> ' + 's' + str(self.n_node) + '[label="' + field + '"]')
+                self.last_parent = n_node
+                self.last_field_name = field
                 self.visit(value)
-
-        #print('}')
+                
+        self.level -= 1
+        if self.level == 0:
+            print('}')
 
 
 class ASTReplaceNum(ast.NodeTransformer):
-
+    
     def __init__(self , number: complex):
         self.number = number
         
     def visit_Num(self, node: ast.Num) -> ast.AST:
         # devolver un nuevo nodo AST con self.number
-        node.value = self.numbe
-        return node
+        return ast.Num(self.number)
     
     # Para Python >= 3.8
     def visit_Constant(self, node: ast.Constant) -> ast.AST:
         # devolver un nuevo nodo AST con self.number si la constante es un número
-        node.value = self.number
-        return node
+        return ast.Constant(self.number)
 
 
 class ASTRemoveConstantIf(ast.NodeTransformer):
 
     def visit_If(self, node: ast.If) -> Union[ast.AST, List[ast.stmt]]:
         # usar node.test, node.test.value, node.body y node.orelse
-        if node.test.value == True:
-            node.test = None
-            node.orelse = None
+        if node.test.value:
             return node.body
+        return node.orelse
