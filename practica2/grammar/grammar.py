@@ -270,11 +270,35 @@ class LL1Table:
         Raises:
             SyntaxError: if the input string is not syntactically correct.
         """
+        stack = ['$', start]
+        while stack and input_string:
+            top = stack.pop()
+            next = input_string[0]
+            if top in self.non_terminals:
+                new_elems = self.cells.get((top,next))
+                if new_elems is not None:
+                    stack.extend(list(new_elems)[::-1])
+                else:
+                    raise SyntaxError
+            elif top in self.terminals:
+                if top == next:
+                    input_string = input_string[1:]
+                else:
+                    raise SyntaxError
+            else:
+                raise SyntaxError
+            
+        if len(input_string) > 0: 
+            # Por ejemplo: "i*i$i"
+            raise SyntaxError
         
-	    # TO-DO: Complete this method for exercise 2...
-        
-
+        if len(stack) != 0:
+            # Por ejemplo: "i*i"
+            raise SyntaxError
+                    
         return ParseTree("") # Return an empty tree by default.
+    
+    
     
 class ParseTree():
     """
