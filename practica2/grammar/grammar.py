@@ -114,8 +114,34 @@ class Grammar:
         Returns:
             First set of str.
         """
+        def _compute_first(self, sentence: str) -> AbstractSet[str]:
+            first = set()
+            if not sentence:
+                first.add('')
+                return first
+                
+            lambdas = 0
+            for elem in sentence:
+                if elem in self.terminals:
+                    if '' in first:
+                        first.remove('')
+                    first.add(elem)
+                    return first
+                elif elem in self.non_terminals:
+                    for rule in self.productions:
+                        if rule.left == elem:
+                            new_elems = _compute_first(self, rule.right)
+                            first.update(new_elems)
+                            if '' in new_elems:
+                                lambdas += 1
+                    if '' not in first:
+                        return first
+            if lambdas != len(sentence):
+                first.remove('')
+            return first
+                
+        return _compute_first(self, sentence)
 
-	# TO-DO: Complete this method for exercise 3...
 
 
     def compute_follow(self, symbol: str) -> AbstractSet[str]:
