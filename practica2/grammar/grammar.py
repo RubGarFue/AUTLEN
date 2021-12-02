@@ -189,8 +189,29 @@ class Grammar:
         Returns:
             LL(1) table for the grammar, or None if the grammar is not LL(1).
         """
+        cells = ()
 
-	# TO-DO: Complete this method for exercise 5...
+        for production in self.productions:
+            first = self.compute_first(production.right)
+            follow = self.compute_follow(production.left)
+            for terminal in self.terminals:
+                if terminal in first:
+                    cells += (TableCell(production.left, terminal, production.right),)
+
+            if '' in first:
+                for terminal in self.terminals:
+                    if terminal in follow:
+                        cells += (TableCell(production.left, terminal, production.right),)
+            
+            if '' in first and '$' in follow:
+                cells += (TableCell(production.left, '$', production.right),)
+        
+        terminals = set()
+        terminals.add('$')
+        terminals.update(self.terminals)
+
+        return LL1Table(self.non_terminals, terminals, cells)
+
 
 
     def is_ll1(self) -> bool:
