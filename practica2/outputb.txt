@@ -1,5 +1,6 @@
 digraph {
 s0[label="Module()"]
+s0 -> s1[label="body"]
 s1[label="FunctionDef(name=print_next_if_pos, returns=None, type_comment=None)"]
 s1 -> s2[label="args"]
 s2[label="arguments(vararg=None, kwarg=None)"]

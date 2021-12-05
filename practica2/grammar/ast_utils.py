@@ -45,7 +45,7 @@ class ASTDotVisitor(ast.NodeVisitor):
         if self.level == 0:
             print('digraph {')
             
-        if self.last_parent:
+        if self.last_parent is not None:
             print('s{} -> s{}[label="{}"]'.format(self.last_parent, self.n_node, self.last_field_name))
         
         prim_values = [] 
