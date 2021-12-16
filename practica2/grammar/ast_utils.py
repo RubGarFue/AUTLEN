@@ -33,7 +33,18 @@ class ASTDotVisitor(ast.NodeVisitor):
         self.last_field_name = ""
 
     def prim_values_str(self, prim_list) -> str:
-        return ', '.join(['='.join([str(el) for el in prim_list[ind]]) for ind in range(len(prim_list))])
+        return_str = ""
+        for param in prim_list:
+            return_str += param[0] + "="
+            if param[1] is not None:
+                if isinstance(param[1], str):
+                    return_str += "'" + param[1] + "', "
+                else:
+                    return_str += str(param[1]) + ", "
+            else:
+                return_str += param[0] + "=None, "
+        return return_str[:-2]
+        #return ', '.join(['='.join([str(el) for el in prim_list[ind]]) for ind in range(len(prim_list))])
 
     def generic_visit(self, node: ast.AST) -> None:
         # usar un esquema similar al generic_visit de la clase padre para recorrer los hijos del nodo actual
@@ -90,9 +101,20 @@ class ASTReplaceNum(ast.NodeTransformer):
 
 
 class ASTRemoveConstantIf(ast.NodeTransformer):
-
+    
     def visit_If(self, node: ast.If) -> Union[ast.AST, List[ast.stmt]]:
         # usar node.test, node.test.value, node.body y node.orelse
-        if node.test.value:
-            return node.body
-        return node.orelse
+        #if node.test.value:
+        #    return node.body
+        #return node.orelse
+        
+        self.generic_visit(node)
+    
+        if isinstance(node.test, ast.Constant) or isinstance(node.test, ast.NameConstant):
+            if node.test.value:
+                return node.body
+
+            else:
+                return node.orelse
+
+        return node
